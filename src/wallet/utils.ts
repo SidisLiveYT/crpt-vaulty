@@ -1,30 +1,21 @@
+import randomWords from "random-words";
 import crypto from "crypto";
 
-const ENCRYPTION_KEY: string = process.env.SC_ENCRYPTION_KEY || ""; // Must be 256 bits (32 characters)
+const ENCRYPTION_KEY: string = randomWords(5)?.join(""); // Must be 256 bits (32 characters)
 const IV_LENGTH: number = 16; // For AES, this is always 16
 
-export function encrypt(
-  text: string,
-  encryptionKey: string = ENCRYPTION_KEY
-): string {
+export function encrypt(text: string, encryptionKey: string = ENCRYPTION_KEY) {
   let iv = Buffer.from(crypto.randomBytes(IV_LENGTH))
     .toString("hex")
     .slice(0, IV_LENGTH);
-  let cipher = crypto.createCipheriv(
-    "aes-256-cbc",
-    Buffer.from(encryptionKey),
-    iv
-  );
+  let key = Buffer.from(encryptionKey);
+  let cipher = crypto.createCipheriv("aes-256-cbc", key, iv);
   let encrypted = cipher.update(text);
-
   encrypted = Buffer.concat([encrypted, cipher.final()]);
   return iv + ":" + encrypted.toString("hex");
 }
 
-export function decrypt(
-  text: string,
-  encryptionKey: string = ENCRYPTION_KEY
-): string {
+export function decrypt(text: string, encryptionKey: string = ENCRYPTION_KEY) {
   let textParts: string[] = text.includes(":") ? text.split(":") : [];
   let iv = Buffer.from(textParts.shift() || "", "binary");
   let encryptedText = Buffer.from(textParts.join(":"), "hex");
