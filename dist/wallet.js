@@ -7,22 +7,25 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-var _wallet_instances, _wallet_parseTokens, _wallet_sync;
+var _wallet_instances, _wallet_parseTokens, _wallet_sync, _wallet_eventEmit;
 Object.defineProperty(exports, "__esModule", { value: true });
 const utils_1 = require("./lib/utils");
 const simple_json_db_1 = __importDefault(require("simple-json-db"));
-const web3_1 = __importDefault(require("./interface/web3"));
+const web3_1 = __importDefault(require("web3"));
 class wallet {
     constructor(email, password, metadata) {
+        var _a;
         this.email = email;
         this.password = password;
         this.metadata = metadata;
         _wallet_instances.add(this);
         this.email = email;
         this.password = password;
+        this.web3 = new web3_1.default(web3_1.default.givenProvider || (metadata === null || metadata === void 0 ? void 0 : metadata.provider) || "http://localhost:8256");
         this.metadata = metadata;
-        this.base = web3_1.default.web3.eth.accounts.wallet;
+        this.base = this.web3.eth.accounts.wallet;
         __classPrivateFieldGet(this, _wallet_instances, "m", _wallet_parseTokens).call(this);
+        __classPrivateFieldGet(this, _wallet_instances, "m", _wallet_eventEmit).call(this, (_a = this.metadata) === null || _a === void 0 ? void 0 : _a.provider);
     }
     login(object) {
         if (!object)
@@ -32,7 +35,7 @@ class wallet {
         return this;
     }
     create(count = 1) {
-        let walBase = web3_1.default.web3.eth.accounts.wallet.create(count);
+        let walBase = this.web3.eth.accounts.wallet.create(count);
         if (!walBase)
             throw Error("Invalid Wallet Base Value Captured to Cache");
         this.base = walBase;
@@ -52,6 +55,15 @@ class wallet {
         this.base.clear();
         __classPrivateFieldGet(this, _wallet_instances, "m", _wallet_sync).call(this);
         return this;
+    }
+    get addresses() {
+        return this.accounts.map((aC) => aC === null || aC === void 0 ? void 0 : aC.address);
+    }
+    get accounts() {
+        let arr = [];
+        for (let i = 0, max = this.base.length; i < max; ++i)
+            arr.push(this.base[`${i}`]);
+        return arr;
     }
 }
 _wallet_instances = new WeakSet(), _wallet_parseTokens = function _wallet_parseTokens() {
@@ -75,11 +87,18 @@ _wallet_instances = new WeakSet(), _wallet_parseTokens = function _wallet_parseT
     this.base = walBase;
     this.metadata = object === null || object === void 0 ? void 0 : object.metadata;
 }, _wallet_sync = function _wallet_sync() {
+    var _a;
+    __classPrivateFieldGet(this, _wallet_instances, "m", _wallet_eventEmit).call(this, (_a = this.metadata) === null || _a === void 0 ? void 0 : _a.provider);
     let eCrypts = this.base.encrypt(this.password);
     wallet.dbCore.set((0, utils_1.encode)(this.email), {
         metadata: this.metadata,
         eCrypts: eCrypts,
     });
+}, _wallet_eventEmit = function _wallet_eventEmit(provider) {
+    if (!(provider && (provider === null || provider === void 0 ? void 0 : provider.startsWith("http://localhost"))))
+        return undefined;
+    this.web3.eth.clearSubscriptions((error) => error ? console.log(error) : undefined);
+    this.web3.eth.subscribe("logs", { address: this.addresses }, (error, log) => error ? console.log(error) : console.log(log));
 };
 wallet.dbCore = new simple_json_db_1.default(__dirname + "/../cache/wallets.json");
 exports.default = wallet;

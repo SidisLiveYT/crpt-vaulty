@@ -1,9 +1,11 @@
 import { encode } from "./lib/utils";
 import sJdb from "simple-json-db";
-import web3Mod from "./interface/web3";
+import Web3 from "web3";
+
 class wallet {
-  [x: string]: any;
   static dbCore: sJdb<any> = new sJdb(__dirname + "/../cache/wallets.json");
+  base: any;
+  web3: Web3;
 
   constructor(
     public email: string,
@@ -12,9 +14,13 @@ class wallet {
   ) {
     this.email = email;
     this.password = password;
+    this.web3 = new Web3(
+      Web3.givenProvider || metadata?.provider || "http://localhost:8256"
+    );
     this.metadata = metadata;
-    this.base = web3Mod.web3.eth.accounts.wallet;
+    this.base = this.web3.eth.accounts.wallet;
     this.#parseTokens();
+    this.#eventEmit(this.metadata?.provider);
   }
 
   login(object: any): this {
@@ -28,14 +34,14 @@ class wallet {
   }
 
   create(count: number = 1): this {
-    let walBase = web3Mod.web3.eth.accounts.wallet.create(count);
+    let walBase = this.web3.eth.accounts.wallet.create(count);
     if (!walBase) throw Error("Invalid Wallet Base Value Captured to Cache");
     this.base = walBase;
     this.#sync();
     return this;
   }
 
-  remove(address: string) {
+  remove(address: string): this {
     if (!address)
       throw Error("Invalid Address in the Object Value for Account Deletion");
     let response = this.base.remove(address);
@@ -45,7 +51,7 @@ class wallet {
     return this;
   }
 
-  clear() {
+  clear(): this {
     this.base.clear();
     this.#sync();
     return this;
@@ -78,12 +84,35 @@ class wallet {
     this.metadata = object?.metadata;
   }
 
-  #sync() {
+  #sync(): void {
+    this.#eventEmit(this.metadata?.provider);
     let eCrypts = this.base.encrypt(this.password);
     wallet.dbCore.set(encode(this.email), {
       metadata: this.metadata,
       eCrypts: eCrypts,
     });
+  }
+
+  #eventEmit(provider?: string): void {
+    if (!(provider && provider?.startsWith("http://localhost")))
+      return undefined;
+    this.web3.eth.clearSubscriptions((error: any) =>
+      error ? console.log(error) : undefined
+    );
+    this.web3.eth.subscribe("logs", { address: this.addresses }, (error, log) =>
+      error ? console.log(error) : console.log(log)
+    );
+  }
+
+  get addresses(): Array<string> {
+    return this.accounts.map((aC) => aC?.address);
+  }
+
+  get accounts(): Array<any> {
+    let arr = [];
+    for (let i = 0, max = this.base.length; i < max; ++i)
+      arr.push(this.base[`${i}`]);
+    return arr;
   }
 }
 
