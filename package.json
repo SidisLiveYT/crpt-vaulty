@@ -5,14 +5,13 @@
   "main": "./dist/index",
   "types": "./dist/index",
   "scripts": {
-    "dev": "tsc --watch & nodemon dist"
+    "dev": "tsc --watch & nodemon dist/ --watch",
+    "test": "node test/run"
   },
-  "author": "Gh111",
+  "author": "Runin Mascot",
   "license": "ISC",
   "dependencies": {
     "crypto": "^1.0.1",
-    "crypto-js": "^4.1.1",
-    "random-words": "^1.2.0",
     "simple-json-db": "^2.0.0",
     "web3": "^1.8.0"
   }

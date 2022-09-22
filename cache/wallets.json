@@ -1,0 +1,27 @@
+{
+    "+Lx9/exgog/Luttshq00zbWQtOeXpUXF": {
+        "eCrypts": [
+            {
+                "version": 3,
+                "id": "e5484b32-9303-4189-88a4-97dfdbb41a02",
+                "address": "f31cda509115445c9fc2a7407b257a96b9ae2246",
+                "crypto": {
+                    "ciphertext": "697a907ce856e871e464629813089b73e0db43c0684c9fc2803087252975a037",
+                    "cipherparams": {
+                        "iv": "7ce144e8f5cc5050653cfae196a3ae4d"
+                    },
+                    "cipher": "aes-128-ctr",
+                    "kdf": "scrypt",
+                    "kdfparams": {
+                        "dklen": 32,
+                        "salt": "ee1963021a50828992f0060aea23403f2dc7a8a24bbada230f6f63565fc235d7",
+                        "n": 8192,
+                        "r": 8,
+                        "p": 1
+                    },
+                    "mac": "523f0e8a9ed172a8f0e8eec4609f71d591309fd11a0a80093b00a03ba4500312"
+                }
+            }
+        ]
+    }
+}
